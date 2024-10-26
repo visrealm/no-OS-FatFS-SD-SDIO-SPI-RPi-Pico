@@ -8,8 +8,11 @@
 #include <stdint.h>
 #include <string.h>
 //
-#include <hardware/gpio.h>
-#include <hardware/clocks.h>
+#include "hardware/gpio.h"
+#include "hardware/clocks.h"
+#include "hardware/structs/io_bank0.h"
+
+
 //
 #include "sd_card.h"
 #include "rp2040_sdio.h"
@@ -522,7 +525,7 @@ static int sd_sdio_read_blocks(sd_card_t *sd_card_p, uint8_t *buffer, uint64_t u
 }
 
 // Helper function to configure whole GPIO in one line
-static void gpio_conf(uint gpio, enum gpio_function fn, bool pullup, bool pulldown, bool output, bool initial_state, bool fast_slew)
+static void gpio_conf(uint gpio, gpio_function_t fn, bool pullup, bool pulldown, bool output, bool initial_state, bool fast_slew)
 {
     gpio_put(gpio, initial_state);
     gpio_set_dir(gpio, output);
@@ -531,7 +534,7 @@ static void gpio_conf(uint gpio, enum gpio_function fn, bool pullup, bool pulldo
 
     if (fast_slew)
     {
-        padsbank0_hw->io[gpio] |= PADS_BANK0_GPIO0_SLEWFAST_BITS;
+        pads_bank0_hw->io[gpio] |= PADS_BANK0_GPIO0_SLEWFAST_BITS;
     }
 }
 
