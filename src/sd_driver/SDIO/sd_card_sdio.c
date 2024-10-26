@@ -10,8 +10,11 @@
 //
 #include "hardware/gpio.h"
 #include "hardware/clocks.h"
-#include "hardware/structs/io_bank0.h"
+#include "hardware/structs/padsbank0.h"
 
+#if PICO_SDK_VERSION_MAJOR < 2
+#define gpio_function_t enum gpio_function
+#endif
 
 //
 #include "sd_card.h"
@@ -534,7 +537,7 @@ static void gpio_conf(uint gpio, gpio_function_t fn, bool pullup, bool pulldown,
 
     if (fast_slew)
     {
-        pads_bank0_hw->io[gpio] |= PADS_BANK0_GPIO0_SLEWFAST_BITS;
+        padsbank0_hw->io[gpio] |= PADS_BANK0_GPIO0_SLEWFAST_BITS;
     }
 }
 

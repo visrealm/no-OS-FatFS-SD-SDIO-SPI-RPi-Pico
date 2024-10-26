@@ -15,7 +15,11 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
-#include "hardware/structs/io_bank0.h"
+#include "hardware/structs/padsbank0.h"
+
+#if PICO_SDK_VERSION_MAJOR < 2
+#define gpio_function_t enum gpio_function
+#endif
 
 //
 #include "hw_config.h"
