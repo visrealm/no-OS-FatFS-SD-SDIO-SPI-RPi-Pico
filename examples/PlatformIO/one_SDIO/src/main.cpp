@@ -37,13 +37,13 @@ void put_out_info_message(const char *s) {
 This example assumes the following wiring:
     | GPIO | SD Card |
     | ---- | ------- |
-    | GP16 | CLK     |
-    | GP17 | CMD     |
-    | GP18 | D0      |
-    | GP19 | D1      |
-    | GP20 | D2      |
-    | GP21 | D3      |
-    | GP22 | DET     |
+    | GP2  | CLK     |
+    | GP3  | CMD     |
+    | GP4  | D0      |
+    | GP5  | D1      |
+    | GP6  | D2      |
+    | GP7  | D3      |
+    | GP9  | DET     |
 */
 static sd_sdio_if_t sdio_if = {
     /* 
@@ -57,26 +57,21 @@ static sd_sdio_if_t sdio_if = {
         D2_gpio = D0_gpio + 2;
         D3_gpio = D0_gpio + 3;
     */
-    .CMD_gpio = 17,
-    .D0_gpio = 18,
+    .CMD_gpio = 3,
+    .D0_gpio = 4,
     .SDIO_PIO = pio1,
     .DMA_IRQ_num = DMA_IRQ_1,
-    .baud_rate = 15 * 1000 * 1000  // 15 MHz
+    .baud_rate = 125 * 1000 * 1000 / 6  // 20833333 Hz
 };
 
 // Hardware Configuration of the SD Card "objects"
 static sd_card_t sd_card = {
-    /* "pcName" is the FatFs "logical drive" identifier.
-    (See http://elm-chan.org/fsw/ff/doc/filename.html#vol) */
-    .pcName = "0:",         
     .type = SD_IF_SDIO,
     .sdio_if_p = &sdio_if,
     // SD Card detect:
     .use_card_detect = true,
-    .card_detect_gpio = 22,  
+    .card_detect_gpio = 9,  
     .card_detected_true = 0, // What the GPIO read returns when a card is present.
-    .card_detect_use_pull = true,
-    .card_detect_pull_hi = true
 };
 /* 
 The following functions are required by the library API. 
@@ -111,7 +106,7 @@ void setup() {
     // See FatFs - Generic FAT Filesystem Module, "Application Interface",
     // http://elm-chan.org/fsw/ff/00index_e.html
     sd_card_t *pSD = sd_get_by_num(0);
-    FRESULT fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
+    FRESULT fr = f_mount(&pSD->state.fatfs, "", 1);
     CHK_FRESULT("f_mount", fr);
     FIL fil;
     const char* const filename = "filename.txt";
@@ -124,7 +119,7 @@ void setup() {
     }
     fr = f_close(&fil);
     CHK_FRESULT("f_close", fr);
-    fr = f_unmount(pSD->pcName);
+    fr = f_unmount("");
     CHK_FRESULT("f_unmount", fr);
 
     puts("Goodbye, world!");

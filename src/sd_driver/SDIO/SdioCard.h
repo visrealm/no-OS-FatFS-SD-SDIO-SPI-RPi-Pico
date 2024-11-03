@@ -73,7 +73,7 @@ uint32_t sd_sdio_errorLine() /* const */;
  */
 bool sd_sdio_isBusy();
 /** \return the SD clock frequency in kHz. */
-uint32_t sd_sdio_kHzSdClk();
+//uint32_t sd_sdio_kHzSdClk();
 /**
  * Read a 512 byte sector from an SD card.
  *
@@ -91,6 +91,8 @@ bool sd_sdio_readSector(sd_card_t *sd_card_p, uint32_t sector, uint8_t *dst);
  * \return true for success or false for failure.
  */
 bool sd_sdio_readSectors(sd_card_t *sd_card_p, uint32_t sector, uint8_t *dst, size_t ns);
+// Read 512-bit SD status
+bool rp2040_sdio_get_sd_status(sd_card_t *sd_card_p, uint8_t response[64]);
 /** Read one data sector in a multiple sector read sequence
  *
  * \param[out] dst Pointer to the location for the data to be read.
@@ -109,7 +111,7 @@ bool sd_sdio_readOCR(sd_card_t *sd_card_p, uint32_t *ocr);
  * \param[out] scr Value of SCR register.
  * \return true for success or false for failure.
  */
-bool sd_sdio_readSCR(sd_card_t *sd_card_p, scr_t *scr);
+// bool sd_sdio_readSCR(sd_card_t *sd_card_p, scr_t *scr);
 /** Start a read multiple sectors sequence.
  *
  * \param[in] sector Address of first sector in sequence.
@@ -143,7 +145,7 @@ uint32_t sd_sdio_status(sd_card_t *sd_card_p);
  * \return The number of 512 byte data sectors in the card
  *         or zero if an error occurs.
  */
-uint64_t sd_sdio_sectorCount(sd_card_t *sd_card_p);
+uint32_t sd_sdio_sectorCount(sd_card_t *sd_card_p);
 /**
  *  Send CMD12 to stop read or write.
  *
@@ -153,7 +155,7 @@ uint64_t sd_sdio_sectorCount(sd_card_t *sd_card_p);
  */
 bool sd_sdio_stopTransmission(sd_card_t *sd_card_p, bool blocking);
 /** \return success if sync successful. Not for user apps. */
-bool sd_sdio_syncDevice(sd_card_t *sd_card_p);
+//bool sd_sdio_syncDevice(sd_card_t *sd_card_p);
 /** Return the card type: SD V1, SD V2 or SDHC
  * \return 0 - SD V1, 1 - SD V2, or 3 - SDHC.
  */

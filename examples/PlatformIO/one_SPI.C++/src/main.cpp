@@ -23,14 +23,14 @@ ArduinoOutStream cout(Serial1);
 
 /* Implement library message callbacks */
 void put_out_error_message(const char *s) {
-    Serial1.write(s);
+    Serial1.printf("%s\r", s);
 }
 void put_out_info_message(const char *s) {
-    Serial1.write(s);
+    Serial1.printf("%s\r", s);
 }
 // This will not be called unless build_flags include "-D USE_DBG_PRINTF":
 void put_out_debug_message(const char *s) {
-    Serial1.write(s);
+    Serial1.printf("%s\r", s);
 }
 
 /* ********************************************************************** */
@@ -73,26 +73,20 @@ void setup() {
         .miso_gpio = 8,   // GPIO number (not Pico pin number)
         .mosi_gpio = 11,
         .sck_gpio = 10,
-        .baud_rate = 12 * 1000 * 1000,   // Actual frequency: 10416666
-        .DMA_IRQ_num = DMA_IRQ_1,
+        .baud_rate = 12 * 1000 * 1000,  // Actual frequency: 10416666
         .set_drive_strength = true,
-        .mosi_gpio_drive_strength = GPIO_DRIVE_STRENGTH_4MA,
-        .sck_gpio_drive_strength = GPIO_DRIVE_STRENGTH_2MA
+        .mosi_gpio_drive_strength = GPIO_DRIVE_STRENGTH_12MA,
+        .sck_gpio_drive_strength = GPIO_DRIVE_STRENGTH_12MA
     };
 
     // Hardware Configuration of SPI Interface object:
     static sd_spi_if_t spi_if = {
         .spi = &spi,   // Pointer to the SPI driving this card
-        .ss_gpio = 12,     // The SPI slave select GPIO for this SD card
-        .set_drive_strength = true,
-        .ss_gpio_drive_strength = GPIO_DRIVE_STRENGTH_4MA
+        .ss_gpio = 12  // The SPI slave select GPIO for this SD card
     };
 
     // Hardware Configuration of the SD Card object:
     static sd_card_t sd_card = {
-        /* "pcName" is the FatFs "logical drive" identifier.
-        (See http://elm-chan.org/fsw/ff/doc/filename.html#vol) */
-        .pcName = "0:",
         .type = SD_IF_SPI,
         .spi_if_p = &spi_if,  // Pointer to the SPI interface driving this card
         // SD Card detect:
@@ -105,6 +99,9 @@ void setup() {
     
     // static FatFsNs::SdCard card = FatFsNs::SdCard(&sd_card);
     FatFsNs::SdCard* card_p(FatFsNs::FatFs::add_sd_card(&sd_card));
+
+    // The H/W config must be set up before this is called:
+    sd_init_driver(); 
 
     /* ********************************************************************** */
     cout << "\033[2J\033[H";  // Clear Screen

@@ -98,21 +98,15 @@ void setup() {
     // Hardware Configuration of the SD Card "objects"
     static sd_card_t sd_cards[] = {
         {   // sd_cards[0]
-         /* "pcName" is the FatFs "logical drive" identifier.
-         (See http://elm-chan.org/fsw/ff/doc/filename.html#vol) */
-         .pcName = "0:",
-         .type = SD_IF_SPI,
-         .spi_if_p = &spi_if,  // Pointer to the SPI interface driving this card
-         .use_card_detect = true,
-         .card_detect_gpio = 9,
-         .card_detected_true = 0,  // What the GPIO read returns when a card is present.
-         .card_detect_use_pull = true,
-         .card_detect_pull_hi = true
+            .type = SD_IF_SPI,
+            .spi_if_p = &spi_if,  // Pointer to the SPI interface driving this card
+            .use_card_detect = true,
+            .card_detect_gpio = 9,
+            .card_detected_true = 0,  // What the GPIO read returns when a card is present.
+            .card_detect_use_pull = true,
+            .card_detect_pull_hi = true
         },
         {   // sd_cards[1]
-            /* "pcName" is the FatFs "logical drive" identifier.
-            (See http://elm-chan.org/fsw/ff/doc/filename.html#vol) */
-            .pcName = "1:",
             .type = SD_IF_SDIO,
             .sdio_if_p = &sdio_if,
             // SD Card detect:
@@ -126,6 +120,9 @@ void setup() {
 
     FatFsNs::FatFs::add_sd_card(&sd_cards[0]);
     FatFsNs::FatFs::add_sd_card(&sd_cards[1]);
+
+    // The H/W config must be set up before this is called:
+    sd_init_driver(); 
 }
 
 /* ********************************************************************** */
@@ -139,7 +136,7 @@ void setup() {
         for (;;) __breakpoint();                                 \
     }
 
-void ls(const char *dir) {
+void local_ls(const char *dir) {
     char cwdbuf[FF_LFN_BUF] = {0};
     FRESULT fr; /* Return value */
     char const *dir_str;
@@ -189,7 +186,7 @@ static void test(FatFsNs::SdCard *SdCard_p) {
     CHK_FRESULT("mount", fr);
     fr = FatFsNs::FatFs::chdrive(SdCard_p->get_name());
     CHK_FRESULT("chdrive", fr);
-    ls(NULL);
+    local_ls(NULL);
 
     FatFsNs::File file;
     fr = file.open("filename.txt", FA_OPEN_APPEND | FA_WRITE);
@@ -205,7 +202,7 @@ static void test(FatFsNs::SdCard *SdCard_p) {
     fr = file.close();
     CHK_FRESULT("close", fr);
 
-    ls("/");
+    local_ls("/");
 
     fr = FatFsNs::Dir::mkdir("subdir");
     if (FR_OK != fr && FR_EXIST != fr) {
@@ -230,12 +227,12 @@ static void test(FatFsNs::SdCard *SdCard_p) {
     fr = file.close();
     CHK_FRESULT("close", fr);
 
-    ls(NULL);
+    local_ls(NULL);
 
     fr = FatFsNs::Dir::chdir("/");
     CHK_FRESULT("chdir", fr);
 
-    ls(NULL);
+    local_ls(NULL);
 
     fr = SdCard_p->unmount();
     CHK_FRESULT("unmount", fr);

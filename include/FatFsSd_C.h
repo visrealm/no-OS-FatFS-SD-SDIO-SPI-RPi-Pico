@@ -13,17 +13,12 @@ specific language governing permissions and limitations under the License.
 */
 #pragma once
 
-// #include "pico/stdlib.h"
-// #include "hardware/sync.h"
-// #include "pico/sync.h"
-// #include "hardware/gpio.h"
-//
 #include "../src/ff15/source/ff.h"
 //
 #include "../src/ff15/source/diskio.h" /* Declarations of disk functions */
 #include "../src/include/f_util.h"
-#include "../src/include/rtc.h"
+#include "../src/include/my_rtc.h"
 #include "../src/sd_driver/sd_card.h"
 #include "../src/sd_driver/SDIO/rp2040_sdio.h"
-#include "../src/sd_driver/SPI/spi.h"
-#include "../src/sd_driver/hw_config.h"
+#include "../src/sd_driver/SPI/my_spi.h"
+#include "../src/include/hw_config.h"

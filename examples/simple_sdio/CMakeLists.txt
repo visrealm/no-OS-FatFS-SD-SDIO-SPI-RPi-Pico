@@ -1,15 +1,24 @@
+# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
+if(WIN32)
+    set(USERHOME $ENV{USERPROFILE})
+else()
+    set(USERHOME $ENV{HOME})
+endif()
+set(sdkVersion 2.0.0)
+set(toolchainVersion 13_2_Rel1)
+set(picotoolVersion 2.0.0)
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
+endif()
+# ====================================================================================
 # Generated Cmake Pico project file
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.5)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(PICO_BOARD pico CACHE STRING "Board type")
 
-# initalize pico_sdk from installed location
-# (note this can come from environment, CMake cache etc)
-#set(PICO_SDK_PATH "/home/carlk/pi/pico/pico-sdk")
-
-# Pull in Raspberry Pi Pico SDK (must be before project)
+# Pull in Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
 project(simple_sdio C CXX ASM)
@@ -29,7 +38,7 @@ add_compile_definitions(USE_PRINTF)
 # Add the standard library and FatFS/SPI to the build
 target_link_libraries(simple_sdio 
     pico_stdlib
-    FatFs_SPI
+    no-OS-FatFS-SD-SDIO-SPI-RPi-Pico
 )
 
 pico_set_program_name(simple_sdio "simple_sdio")
@@ -42,4 +51,3 @@ pico_enable_stdio_uart(simple_sdio 1)
 pico_enable_stdio_usb(simple_sdio 1)
 
 pico_add_extra_outputs(simple_sdio)
-

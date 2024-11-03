@@ -13,14 +13,13 @@ specific language governing permissions and limitations under the License.
 */
 
 #include <assert.h>
+#include <stdlib.h>
 #include <vector>
 //
 #include "FatFsSd.h"
 //
 #include "SerialUART.h"
 #include "iostream/ArduinoStream.h"
-
-static const uint led_pin = PICO_DEFAULT_LED_PIN;
 
 // Serial output stream
 ArduinoOutStream cout(Serial1);
@@ -48,12 +47,12 @@ void test(FatFsNs::SdCard* SdCard_p) {
     FRESULT fr = SdCard_p->mount();
     if (FR_OK != fr) {
         cout << "mount error: " << FRESULT_str(fr) << " (" << fr << ")" << endl;
-        for (;;) __BKPT(1);
+        abort();
     }
     fr = FatFsNs::FatFs::chdrive(SdCard_p->get_name());
     if (FR_OK != fr) {
         cout << "chdrive error: " << FRESULT_str(fr) << " (" << fr << ")" << endl;
-        for (;;) __BKPT(2);
+        abort();
     }
 
     FatFsNs::File file;
@@ -61,16 +60,16 @@ void test(FatFsNs::SdCard* SdCard_p) {
     fr = file.open(filename, FA_OPEN_APPEND | FA_WRITE);
     if (FR_OK != fr && FR_EXIST != fr) {
         cout << "open(" << filename << ") error: " << FRESULT_str(fr) << " (" << fr << ")" << endl;
-        for (;;) __BKPT(3);
+        abort();
     }
     if (file.printf("Hello, world!\n") < 0) {
         cout << "printf failed" << endl;
-        for (;;) __BKPT(4);
+        abort();
     }
     fr = file.close();
     if (FR_OK != fr) {
         cout << "close error: " << FRESULT_str(fr) << " (" << fr << ")" << endl;
-        for (;;) __BKPT(5);
+        abort();
     }
     SdCard_p->unmount();
 }
@@ -105,9 +104,7 @@ void setup() {
     cout << "\033[2J\033[H";  // Clear Screen
     cout << "Hello, world!" << endl;
 
-    gpio_init(led_pin);
-    gpio_set_dir(led_pin, GPIO_OUT);
-
+    pinMode(LED_BUILTIN, OUTPUT);
     time_init();
 
     // Hardware Configuration of SPI "object"
@@ -120,8 +117,6 @@ void setup() {
     spi_p->set_drive_strength = true;
     spi_p->mosi_gpio_drive_strength = GPIO_DRIVE_STRENGTH_4MA;
     spi_p->sck_gpio_drive_strength = GPIO_DRIVE_STRENGTH_2MA;
-    spi_p->DMA_IRQ_num = DMA_IRQ_0;
-    spi_p->use_exclusive_DMA_IRQ_handler = true;
     spi_p->baud_rate = 12 * 1000 * 1000;  // Actual frequency: 10416666
 
     // Hardware Configurtion of the SPI Interface "object"
@@ -133,7 +128,6 @@ void setup() {
     // Hardware Configuration of the SD Card "object"
     sd_card_t *sd_card_p = new sd_card_t();
     assert(sd_card_p);
-    sd_card_p->pcName = "0:";  // Name used to mount device
     sd_card_p->type = SD_IF_SPI;
     sd_card_p->spi_if_p = spi_if_p;  // Pointer to the SPI interface driving this card
     sd_card_p->use_card_detect = true;
@@ -156,7 +150,6 @@ void setup() {
     // Hardware Configuration of the SD Card "object"
     sd_card_p = new sd_card_t();
     assert(sd_card_p);
-    sd_card_p->pcName = "1:";  // Name used to mount device
     sd_card_p->type = SD_IF_SDIO;
     sd_card_p->sdio_if_p = sd_sdio_if_p;
     sd_card_p->use_card_detect = true;
@@ -167,6 +160,9 @@ void setup() {
 
     FatFsNs::FatFs::add_sd_card(sd_card_p);
 
+    // The H/W config must be set up before this is called:
+    sd_init_driver(); 
+
     for (size_t i = 0; i < FatFsNs::FatFs::SdCard_get_num(); ++i)
         test(FatFsNs::FatFs::SdCard_get_by_num(i));
 
@@ -174,9 +170,9 @@ void setup() {
 }
 void loop() {
     while (true) {
-        gpio_put(led_pin, 1);
+        digitalWrite(LED_BUILTIN, HIGH);
         sleep_ms(250);
-        gpio_put(led_pin, 0);
+        digitalWrite(LED_BUILTIN, LOW);  
         sleep_ms(250);
     }
 }

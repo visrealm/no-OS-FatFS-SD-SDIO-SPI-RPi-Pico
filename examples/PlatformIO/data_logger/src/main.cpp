@@ -18,10 +18,11 @@ This example reads analog input A0 and logs the voltage
 
 It also demonstates a way to do static configuration.
 */
+#include <stdlib.h>
 #include <time.h>
 //
 #include "hardware/adc.h"
-#include "hardware/rtc.h"
+#include "pico/aon_timer.h"
 #include "pico/stdlib.h"
 //
 #include "FatFsSd.h"
@@ -146,7 +147,7 @@ bool process_logger() {
     //   the string has been completely written.
     ASSERT(0 < nw && nw < (int)sizeof buf);
     n += nw;
-    cout << buf;
+    cout << buf << "\r";
 
     UINT bw;
     fr = file.write(buf, n, &bw);
@@ -170,18 +171,40 @@ void setup() {
         ;  // Serial is via USB; wait for enumeration
     cout << "Hello, world!" << endl;
 
+    adc_init(); // Reading voltage on A0
+
     time_init();
     // You might want to ask the user for the time,
     //   but it is hardcoded here for simplicity:
-    datetime_t t = {
-        .year = 2023,
-        .month = 2,
-        .day = 10,
-        .dotw = 5,  // 0 is Sunday, so 5 is Friday
-        .hour = 17,
-        .min = 5,
-        .sec = 0};
-    rtc_set_datetime(&t);
+    struct tm t = {
+        // tm_sec	int	seconds after the minute	0-61*
+        .tm_sec = 0,
+        // tm_min	int	minutes after the hour	0-59
+        .tm_min = 31,
+        // tm_hour	int	hours since midnight	0-23
+        .tm_hour = 16,
+        // tm_mday	int	day of the month	1-31
+        .tm_mday = 22,
+        // tm_mon	int	months since January	0-11
+        .tm_mon = 9 - 1,
+        // tm_year	int	years since 1900
+        .tm_year = 2024 - 1900,
+        // tm_wday	int	days since Sunday	0-6
+        .tm_wday = 0,
+        // tm_yday	int	days since January 1	0-365
+        .tm_yday = 0,
+        // tm_isdst	int	Daylight Saving Time flag
+        .tm_isdst = 0
+    };
+    /* The values of the members tm_wday and tm_yday of timeptr are ignored, and the values of
+       the other members are interpreted even if out of their valid ranges */
+    time_t epoch_secs = mktime(&t);
+    if (-1 == epoch_secs) {
+        printf("The passed in datetime was invalid\n");
+        abort();
+    }
+    struct timespec ts = {.tv_sec = epoch_secs, .tv_nsec = 0};
+    aon_timer_set_time(&ts);
 
     /* This example assumes the following wiring:
     | GPIO | SPI1     | SD Card |
@@ -201,10 +224,10 @@ void setup() {
         .mosi_gpio = 11,
         .sck_gpio = 10,
         .baud_rate = 12 * 1000 * 1000,  // Actual frequency: 10416666
-        .DMA_IRQ_num = DMA_IRQ_1,
         .set_drive_strength = true,
-        .mosi_gpio_drive_strength = GPIO_DRIVE_STRENGTH_4MA,
-        .sck_gpio_drive_strength = GPIO_DRIVE_STRENGTH_2MA};
+        .mosi_gpio_drive_strength = GPIO_DRIVE_STRENGTH_12MA,
+        .sck_gpio_drive_strength = GPIO_DRIVE_STRENGTH_12MA
+    };
 
     // Hardware Configuration of SPI Interface object:
     static sd_spi_if_t spi_if = {
@@ -215,9 +238,6 @@ void setup() {
 
     // Hardware Configuration of the SD Card object:
     static sd_card_t sd_card = {
-        /* "pcName" is the FatFs "logical drive" identifier.
-        (See http://elm-chan.org/fsw/ff/doc/filename.html#vol) */
-        .pcName = "0:",
         .type = SD_IF_SPI,
         .spi_if_p = &spi_if,  // Pointer to the SPI interface driving this card
         // SD Card detect:
@@ -228,6 +248,9 @@ void setup() {
         .card_detect_pull_hi = true};
 
     FatFsNs::SdCard* SdCard_p(FatFsNs::FatFs::add_sd_card(&sd_card));
+
+    // The H/W config must be set up before this is called:
+    sd_init_driver(); 
 
     FRESULT fr = SdCard_p->mount();
     CHK_FRESULT("mount", fr);
